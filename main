@@ -1,0 +1,159 @@
+#include "cipher.h"
+#include "tests.h"
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+// your code goes here
+#define TEST_ARG_COUNT_1 2
+#define TEST_ARG_COUNT_5 5
+#define ERROR_COUNT_ARGS "The program receives 1 or 4 arguments only.\n"
+#define ERROR_MESSAGE_ARG_NOT_TEST "Usage: cipher test\n"
+#define ERROR_ARG_COMMAND "The given command is invalid.\n"
+#define ERROR_SHIFT_VALUE "The given shift value is invalid.\n"
+#define ERROR_FILE "The given file is invalid.\n"
+#define ZERO 0
+#define ONE 1
+#define TWO 2
+#define THREE 3
+#define FOUR 4
+#define FIVE 5
+#define SIX 6
+#define SEVEN 7
+#define EIGHT 8
+#define NINE 9
+#define MAX_LEN_LINE 1025
+#define BASE_TEN 10
+
+// Function to check if a file can be opened for reading
+int open_file(char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (file) {
+        fclose(file);
+        return 1;
+    }
+    return 0;
+}
+
+// Function to read lines from a file, apply cipher or decipher,
+// and write to an output file
+void read_file_cipher_decipher(char *filename, char *outfile,
+                               char *command, int k) {
+    FILE *file = fopen(filename, "r");
+
+    FILE *out_file = fopen(outfile, "w");
+    if (!file || !out_file) {
+        fprintf(stderr, ERROR_FILE);
+        fclose(file);
+        fclose(out_file);
+        return;
+    }
+    char text_line[MAX_LEN_LINE];
+
+    int i = 0;
+    while (fgets(text_line, MAX_LEN_LINE, file) != NULL) {
+        if (strcmp(command, "cipher") == 0) {
+            cipher(text_line, k);
+        } else {
+            decipher(text_line, k);
+        }
+
+        fputs(text_line, out_file);
+        i++;
+    }
+    fclose(file);
+    fclose(out_file);
+}
+
+// Function to run a series of test cases and return success/failure
+int test() {
+    int pass_or_not[NINE];
+
+    pass_or_not[ONE] = test_cipher_non_cyclic_lower_case_positive_k();
+    pass_or_not[TWO] =
+            test_cipher_cyclic_lower_case_special_char_positive_k();
+    pass_or_not[THREE] =
+            test_cipher_non_cyclic_lower_case_special_char_negative_k();
+    pass_or_not[FOUR] = test_cipher_cyclic_lower_case_negative_k();
+    pass_or_not[FIVE] = test_cipher_cyclic_upper_case_positive_k();
+    pass_or_not[SIX] = test_decipher_non_cyclic_lower_case_positive_k();
+    pass_or_not[SEVEN] =
+            test_decipher_non_cyclic_lower_case_special_char_negative_k();
+    pass_or_not[EIGHT] = test_decipher_cyclic_lower_case_negative_k();
+    pass_or_not[ZERO] = test_decipher_cyclic_upper_case_positive_k();
+    for (int i = 0; i < NINE; i++) {
+        if (pass_or_not[i] == 1) {
+            return EXIT_FAILURE;
+        }
+    }
+    return EXIT_SUCCESS;
+}
+
+// Function to handle the "cipher" or "decipher" command,
+// validate arguments, and process files
+int call_cipher(char *argv_one, char *argv_two, char *argv_three,
+                char *argv_four, int argc) {
+    int num_k = 0;
+    char *endptr;
+    num_k = strtol(argv_two, &endptr, BASE_TEN);
+    if (*endptr != '\0') {
+        fprintf(stderr, ERROR_SHIFT_VALUE);
+        return EXIT_FAILURE;
+    }
+    if (argc == TEST_ARG_COUNT_5) {
+        if (num_k == 0 && strcmp(argv_two, "0") != 0) {
+            fprintf(stderr, ERROR_SHIFT_VALUE);
+            return EXIT_FAILURE;
+        }
+        for (size_t i = 0; i < strlen(argv_two); i++) {
+            if (argv_two[i] == '.') {
+                fprintf(stderr, ERROR_SHIFT_VALUE);
+                return EXIT_FAILURE;
+            }
+        }
+        if (!argv_three || !open_file(argv_three)) {
+            fprintf(stderr, ERROR_FILE);
+            return EXIT_FAILURE;
+        }
+        if (!open_file(argv_four)) {
+            FILE *out_file = fopen(argv_four, "w");
+            if (!out_file) {
+                fprintf(stderr, ERROR_FILE);
+                return EXIT_FAILURE;
+            }
+            fclose(out_file);
+        }
+        read_file_cipher_decipher(argv_three, argv_four,
+                                  argv_one, num_k);
+        return EXIT_SUCCESS;
+    }
+    return EXIT_FAILURE;
+}
+
+// Main function to handle command-line arguments and run
+// either test or cipher/decipher
+int main(int argc, char *argv[]) {
+    if (argc != TEST_ARG_COUNT_1 && argc != TEST_ARG_COUNT_5) {
+        fprintf(stderr, ERROR_COUNT_ARGS);
+        return EXIT_FAILURE;
+    }
+    if (argc == TEST_ARG_COUNT_1) {
+        if (strcmp(argv[ONE], "test") != 0) {
+            fprintf(stderr, ERROR_MESSAGE_ARG_NOT_TEST);
+            return EXIT_FAILURE;
+        }
+        return test();
+    }
+    if (argc == TEST_ARG_COUNT_5) {
+        if (strcmp(argv[1], "cipher") != 0 && strcmp(argv[1],
+                                                     "decipher") != 0) {
+            fprintf(stderr, ERROR_ARG_COMMAND);
+            return EXIT_FAILURE;
+        }
+    }
+    return call_cipher(argv[ONE], argv[TWO],
+                       argv[THREE], argv[FOUR], argc);
+}
+
+
+
+
