@@ -1,0 +1,99 @@
+#include "cipher.h"
+
+#include <stdio.h>
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <string.h>
+//#include <ctype.h>
+
+#define NUM_OF_LETTERS 26
+
+// Function to handle character shifting within the lowercase
+// alphabet circularly
+// Parameters:
+//   - prev_letter: the ASCII value of the character to shift
+//   - k: the shift amount
+// Returns the new ASCII value of the shifted character.
+int circle_of_lowercase_letters(int prev_letter, int k) {
+  if (k > 0) {
+    prev_letter = 'a' + ((prev_letter + k) - 'z') - 1;
+  } else {
+    prev_letter = 'z' - ('a' - (prev_letter + k)) + 1;
+  }
+  return prev_letter;
+}
+
+// Function to handle character shifting within the uppercase
+// alphabet circularly
+// Parameters:
+//   - prev_letter: the ASCII value of the character to shift
+//   - k: the shift amount
+// Returns the new ASCII value of the shifted character.
+int circle_of_uppercase_letters(int prev_letter, int k) {
+  if (k > 0) {
+    prev_letter = 'A' + ((prev_letter + k) - 'Z') - 1;
+  } else {
+    prev_letter = 'Z' - ('A' - (prev_letter + k)) + 1;
+  }
+  return prev_letter;
+}
+
+/// IN THIS FILE, IMPLEMENT EVERY FUNCTION THAT'S DECLARED IN cipher.h.
+// Function to calculate the new character after shifting
+// Parameters:
+//   - prev_letter: the ASCII value of the original character
+//   - k: the shift amount
+// Handles both lowercase and uppercase characters.
+// If the shift goes beyond 'z' or 'a'
+// for lowercase or 'Z' or 'A' for uppercase,
+// it wraps around using circular shifting.
+// Returns the ASCII value of the shifted character.
+char new_char(int prev_letter, int k) {
+  if (prev_letter >= 'a' && prev_letter <= 'z') {
+    if (k + prev_letter > 'z' || k + prev_letter < 'a') {
+      prev_letter = circle_of_lowercase_letters(prev_letter, k);
+    } else {
+      prev_letter = (prev_letter + k);
+    }
+  } else {
+    if (k + prev_letter > 'Z' || k + prev_letter < 'A') {
+      prev_letter = circle_of_uppercase_letters(prev_letter, k);
+    } else {
+      prev_letter = (prev_letter + k);
+    }
+  }
+  return (char) (prev_letter);
+}
+
+// See full documentation in header file
+// Function to apply the cipher on a string by shifting each
+// character by k
+// Parameters:
+//   - s: the string to be encrypted (character array)
+//   - k: the shift amount
+// Only alphabetic characters are shifted, while non-alphabetic
+// characters are left unchanged.
+void cipher(char s[], int k) {
+  int i = 0;
+  int ascii_val = 0;
+  k = k % NUM_OF_LETTERS;
+  for (; s[i] != '\0'; i++) {
+    ascii_val = (int) s[i];
+    if ((ascii_val >= 'A' && ascii_val <= 'Z') || (
+          ascii_val >= 'a' && ascii_val <= 'z')) {
+      s[i] = new_char(ascii_val, k);
+    }
+  }
+}
+
+
+// See full documentation in header file
+// Function to apply the decipher (reverse cipher) on a
+// string by shifting each character by -k
+// Parameters:
+//   - s: the string to be decrypted (character array)
+//   - k: the shift amount
+// Calls the cipher function with -k to reverse the encryption.
+void decipher(char s[], int k) {
+  cipher(s, -k);
+}
